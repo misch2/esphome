@@ -135,7 +135,7 @@ void ESP32Camera::dump_config() {
   ESP_LOGCONFIG(TAG, "  Horizontal Mirror: %s", ONOFF(st.hmirror));
   ESP_LOGCONFIG(TAG, "  Special Effect: %u", st.special_effect);
   ESP_LOGCONFIG(TAG, "  White Balance Mode: %u", st.wb_mode);
-  ESP_LOGCONFIG(TAG, "  Night Mode: %d", s.get_reg(s, 0x10f, 0xff) == 0x4b ? 1 : 0);
+  ESP_LOGCONFIG(TAG, "  Night Mode: %d", s->get_reg(s, 0x10f, 0xff) == 0x4b ? 1 : 0);
   // ESP_LOGCONFIG(TAG, "  Auto White Balance: %u", st.awb);
   // ESP_LOGCONFIG(TAG, "  Auto White Balance Gain: %u", st.awb_gain);
   ESP_LOGCONFIG(TAG, "  Auto Exposure Control: %u", st.aec);
