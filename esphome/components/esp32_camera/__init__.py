@@ -285,7 +285,7 @@ async def to_code(config):
     cg.add_define("USE_ESP32_CAMERA")
 
     if CORE.using_esp_idf:
-        cg.add_library("misch2/esp32-camera", "ov2640-nightmode")
+        cg.add_library("espressif/esp32-camera", "1.0.0")
         add_idf_sdkconfig_option("CONFIG_RTCIO_SUPPORT_RTC_GPIO_DESC", True)
 
     for conf in config.get(CONF_ON_STREAM_START, []):
