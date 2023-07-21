@@ -18,6 +18,7 @@ void ESP32Camera::setup() {
   /* initialize time to now */
   this->last_update_ = millis();
 
+  ESP_LOGD(TAG, "calling esp_camera_init");
   /* initialize camera */
   esp_err_t err = esp_camera_init(&this->config_);
   if (err != ESP_OK) {
