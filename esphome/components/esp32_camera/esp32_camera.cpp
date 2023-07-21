@@ -22,10 +22,21 @@ void ESP32Camera::setup() {
   esp_err_t err = esp_camera_init(&this->config_);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_camera_init failed: %s", esp_err_to_name(err));
-    this->init_error_ = err;
-    this->mark_failed();
-    return;
+
+    ESP_LOGE(TAG, "waiting 1 sec");
+    delay(1000);  // 1 sec
+    ESP_LOGE(TAG, "trying again");
+    esp_err_t err = esp_camera_init(&this->config_);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "esp_camera_init failed multiple times: %s", esp_err_to_name(err));
+
+      this->init_error_ = err;
+      this->mark_failed();
+      return;
+    }
   }
+  ESP_LOGE(TAG, "esp_camera_init success");
 
   /* initialize camera parameters */
   this->update_camera_parameters();
