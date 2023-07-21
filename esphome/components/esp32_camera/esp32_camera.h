@@ -186,6 +186,7 @@ class ESP32Camera : public Component, public EntityBase {
   ESP32AgcGainCeiling agc_gain_ceiling_{ESP32_GAINCEILING_2X};
   /* -- white balance */
   ESP32WhiteBalanceMode wb_mode_{ESP32_WB_MODE_AUTO};
+  /* -- night mode */
   uint8_t night_mode_{0};
   /* -- Test */
   bool test_pattern_{false};

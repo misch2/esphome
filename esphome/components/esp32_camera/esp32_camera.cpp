@@ -135,8 +135,7 @@ void ESP32Camera::dump_config() {
   ESP_LOGCONFIG(TAG, "  Horizontal Mirror: %s", ONOFF(st.hmirror));
   ESP_LOGCONFIG(TAG, "  Special Effect: %u", st.special_effect);
   ESP_LOGCONFIG(TAG, "  White Balance Mode: %u", st.wb_mode);
-  // ESP_LOGCONFIG(TAG, "  Night Mode: %u", st.night_mode);
-  ESP_LOGCONFIG(TAG, "  Night Mode: unknown? FIXME");
+  ESP_LOGCONFIG(TAG, "  Night Mode: %d", s.get_reg(s, 0x10f, 0xff) == 0x4b ? 1 : 0);
   // ESP_LOGCONFIG(TAG, "  Auto White Balance: %u", st.awb);
   // ESP_LOGCONFIG(TAG, "  Auto White Balance Gain: %u", st.awb_gain);
   ESP_LOGCONFIG(TAG, "  Auto Exposure Control: %u", st.aec);
@@ -377,21 +376,16 @@ void ESP32Camera::update_camera_parameters() {
   /* update white balance mode */
   s->set_wb_mode(s, (int) this->wb_mode_);  // 0 to 4
 
-
-  // s->set_night_mode(s, (int) this->night_mode_);  // 0 to 2
-// FIXME direct register write?
-  // int  (*set_reg)             (sensor_t *sensor, int reg, int mask, int value);
+  /* update night mode */
+  //  see this for emulation of WcFeature from Tasmota:
+  //  https://github.com/arendst/Tasmota/blob/67a62ef3c8297409d0bc58b511e4958ebae577ed/tasmota/tasmota_xdrv_driver/xdrv_81_esp32_webcam.ino#L219
   if (this->night_mode_ == 0) {
-    // COM1 = 0x103
-    // RSVD = 0x10f
       s->set_reg(s, 0x103, 0xff, 0x0a);  // COM1: Reset dummy frames
-      s->set_reg(s, 0x10f, 0xff, 0x43);
-  } else if (this->night_mode_ == 2) {
-      s->set_reg(s, 0x10f, 0xff, 0x4b); // enable nightmode
+      s->set_reg(s, 0x10f, 0xff, 0x43);  // RSVD: disable nightmode
+  } else {
+      s->set_reg(s, 0x10f, 0xff, 0x4b);  // RSVD: enable nightmode
       s->set_reg(s, 0x103, 0xff, 0xcf);  // COM1: Set dummy frames to 7
   }
-  // FIXME mode 1?
-
 
   /* update test pattern */
   s->set_colorbar(s, this->test_pattern_);
