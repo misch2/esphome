@@ -36,7 +36,7 @@ void ESP32Camera::setup() {
       return;
     }
   }
-  ESP_LOGE(TAG, "esp_camera_init success");
+  ESP_LOGD(TAG, "esp_camera_init success");
 
   /* initialize camera parameters */
   this->update_camera_parameters();
