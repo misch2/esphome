@@ -201,7 +201,17 @@ void ESP32Camera::loop() {
 
   if (fb == nullptr) {
     ESP_LOGW(TAG, "Got invalid frame from camera!");
-    xQueueSend(this->framebuffer_return_queue_, &fb, portMAX_DELAY);
+    
+    
+
+
+/* misch tmp test */
+    // xQueueSend(this->framebuffer_return_queue_, &fb, portMAX_DELAY);
+    ESP_LOGW(TAG, "Attempting to reset camera");
+    this->update_camera_parameters();
+    this->current_image_.reset();
+
+
     return;
   }
   this->current_image_ = std::make_shared<CameraImage>(fb, this->single_requesters_ | this->stream_requesters_);
