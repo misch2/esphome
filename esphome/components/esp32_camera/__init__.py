@@ -135,6 +135,8 @@ CONF_AGC_VALUE = "agc_value"
 CONF_AGC_GAIN_CEILING = "agc_gain_ceiling"
 # white balance
 CONF_WB_MODE = "wb_mode"
+# night mode
+CONF_NIGHT_MODE = "night_mode"
 # test pattern
 CONF_TEST_PATTERN = "test_pattern"
 # framerates
@@ -206,6 +208,8 @@ CONFIG_SCHEMA = cv.ENTITY_BASE_SCHEMA.extend(
         ),
         # white balance
         cv.Optional(CONF_WB_MODE, default="AUTO"): cv.enum(ENUM_WB_MODE, upper=True),
+        # night mode
+        cv.Optional(CONF_NIGHT_MODE, default=0): cv.int_range(min=0, max=1),
         # test pattern
         cv.Optional(CONF_TEST_PATTERN, default=False): cv.boolean,
         # framerates
@@ -265,6 +269,8 @@ SETTERS = {
     CONF_AGC_GAIN_CEILING: "set_agc_gain_ceiling",
     # white balance
     CONF_WB_MODE: "set_wb_mode",
+    # night mode
+    CONF_NIGHT_MODE: "set_night_mode",
     # test pattern
     CONF_TEST_PATTERN: "set_test_pattern",
 }
