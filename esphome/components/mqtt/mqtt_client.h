@@ -9,10 +9,12 @@
 #include "esphome/core/log.h"
 #include "esphome/components/json/json_util.h"
 #include "esphome/components/network/ip_address.h"
-#if defined(USE_ESP_IDF)
-#include "mqtt_backend_idf.h"
-#elif defined(USE_ARDUINO)
-#include "mqtt_backend_arduino.h"
+#if defined(USE_ESP32)
+#include "mqtt_backend_esp32.h"
+#elif defined(USE_ESP8266)
+#include "mqtt_backend_esp8266.h"
+#elif defined(USE_LIBRETINY)
+#include "mqtt_backend_libretiny.h"
 #endif
 #include "lwip/ip_addr.h"
 
@@ -49,6 +51,7 @@ struct MQTTCredentials {
   std::string username;
   std::string password;
   std::string client_id;  ///< The client ID. Will automatically be truncated to 23 characters.
+  bool clean_session;     ///< Whether the session will be cleaned or remembered between connects.
 };
 
 /// Simple data struct for Home Assistant component availability.
@@ -77,6 +80,7 @@ enum MQTTDiscoveryObjectIdGenerator {
 struct MQTTDiscoveryInfo {
   std::string prefix;  ///< The Home Assistant discovery prefix. Empty means disabled.
   bool retain;         ///< Whether to retain discovery messages.
+  bool discover_ip;    ///< Enable the Home Assistant device discovery.
   bool clean;
   MQTTDiscoveryUniqueIdGenerator unique_id_generator;
   MQTTDiscoveryObjectIdGenerator object_id_generator;
@@ -120,12 +124,14 @@ class MQTTClientComponent : public Component {
    * @param retain Whether to retain discovery messages.
    */
   void set_discovery_info(std::string &&prefix, MQTTDiscoveryUniqueIdGenerator unique_id_generator,
-                          MQTTDiscoveryObjectIdGenerator object_id_generator, bool retain, bool clean = false);
+                          MQTTDiscoveryObjectIdGenerator object_id_generator, bool retain, bool discover_ip,
+                          bool clean = false);
   /// Get Home Assistant discovery info.
   const MQTTDiscoveryInfo &get_discovery_info() const;
   /// Globally disable Home Assistant discovery.
   void disable_discovery();
   bool is_discovery_enabled() const;
+  bool is_discovery_ip_enabled() const;
 
 #if ASYNC_TCP_SSL_ENABLED
   /** Add a SSL fingerprint to use for TCP SSL connections to the MQTT broker.
@@ -142,8 +148,10 @@ class MQTTClientComponent : public Component {
    */
   void add_ssl_fingerprint(const std::array<uint8_t, SHA1_SIZE> &fingerprint);
 #endif
-#ifdef USE_ESP_IDF
+#ifdef USE_ESP32
   void set_ca_certificate(const char *cert) { this->mqtt_backend_.set_ca_certificate(cert); }
+  void set_cl_certificate(const char *cert) { this->mqtt_backend_.set_cl_certificate(cert); }
+  void set_cl_key(const char *key) { this->mqtt_backend_.set_cl_key(key); }
   void set_skip_cert_cn_check(bool skip_check) { this->mqtt_backend_.set_skip_cert_cn_check(skip_check); }
 #endif
   const Availability &get_availability();
@@ -247,6 +255,7 @@ class MQTTClientComponent : public Component {
   void set_username(const std::string &username) { this->credentials_.username = username; }
   void set_password(const std::string &password) { this->credentials_.password = password; }
   void set_client_id(const std::string &client_id) { this->credentials_.client_id = client_id; }
+  void set_clean_session(const bool &clean_session) { this->credentials_.clean_session = clean_session; }
   void set_on_connect(mqtt_on_connect_callback_t &&callback);
   void set_on_disconnect(mqtt_on_disconnect_callback_t &&callback);
 
@@ -286,6 +295,7 @@ class MQTTClientComponent : public Component {
   MQTTDiscoveryInfo discovery_info_{
       .prefix = "homeassistant",
       .retain = true,
+      .discover_ip = true,
       .clean = false,
       .unique_id_generator = MQTT_LEGACY_UNIQUE_ID_GENERATOR,
       .object_id_generator = MQTT_NONE_OBJECT_ID_GENERATOR,
@@ -296,10 +306,12 @@ class MQTTClientComponent : public Component {
   int log_level_{ESPHOME_LOG_LEVEL};
 
   std::vector<MQTTSubscription> subscriptions_;
-#if defined(USE_ESP_IDF)
-  MQTTBackendIDF mqtt_backend_;
-#elif defined(USE_ARDUINO)
-  MQTTBackendArduino mqtt_backend_;
+#if defined(USE_ESP32)
+  MQTTBackendESP32 mqtt_backend_;
+#elif defined(USE_ESP8266)
+  MQTTBackendESP8266 mqtt_backend_;
+#elif defined(USE_LIBRETINY)
+  MQTTBackendLibreTiny mqtt_backend_;
 #endif
 
   MQTTClientState state_{MQTT_CLIENT_DISCONNECTED};

@@ -4,33 +4,33 @@ from esphome.components import sensor
 from esphome.const import (
     CONF_GAS_RESISTANCE,
     CONF_HUMIDITY,
+    CONF_IAQ_ACCURACY,
     CONF_PRESSURE,
+    CONF_SAMPLE_RATE,
     CONF_TEMPERATURE,
+    DEVICE_CLASS_ATMOSPHERIC_PRESSURE,
     DEVICE_CLASS_CARBON_DIOXIDE,
     DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS_PARTS,
-    DEVICE_CLASS_ATMOSPHERIC_PRESSURE,
     DEVICE_CLASS_TEMPERATURE,
+    DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+    ICON_GAS_CYLINDER,
+    ICON_GAUGE,
     STATE_CLASS_MEASUREMENT,
     UNIT_CELSIUS,
     UNIT_HECTOPASCAL,
     UNIT_OHM,
     UNIT_PARTS_PER_MILLION,
     UNIT_PERCENT,
-    ICON_GAS_CYLINDER,
-    ICON_GAUGE,
 )
 from . import (
     BME680BSECComponent,
     CONF_BME680_BSEC_ID,
-    CONF_SAMPLE_RATE,
     SAMPLE_RATE_OPTIONS,
 )
 
 DEPENDENCIES = ["bme680_bsec"]
 
 CONF_IAQ = "iaq"
-CONF_IAQ_ACCURACY = "iaq_accuracy"
 CONF_CO2_EQUIVALENT = "co2_equivalent"
 CONF_BREATH_VOC_EQUIVALENT = "breath_voc_equivalent"
 UNIT_IAQ = "IAQ"
@@ -108,12 +108,13 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def setup_conf(config, key, hub):
-    if key in config:
-        conf = config[key]
-        sens = await sensor.new_sensor(conf)
+    if sensor_config := config.get(key):
+        sens = await sensor.new_sensor(sensor_config)
         cg.add(getattr(hub, f"set_{key}_sensor")(sens))
-        if CONF_SAMPLE_RATE in conf:
-            cg.add(getattr(hub, f"set_{key}_sample_rate")(conf[CONF_SAMPLE_RATE]))
+        if CONF_SAMPLE_RATE in sensor_config:
+            cg.add(
+                getattr(hub, f"set_{key}_sample_rate")(sensor_config[CONF_SAMPLE_RATE])
+            )
 
 
 async def to_code(config):
