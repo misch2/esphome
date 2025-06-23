@@ -148,7 +148,7 @@ class ESP32Camera : public EntityBase, public Component {
   /* -- white balance */
   void set_wb_mode(ESP32WhiteBalanceMode mode);
   /* -- night mode */
-  void set_night_mode(uint8_t mode);
+  void set_night_mode(bool mode);
   /* -- test */
   void set_test_pattern(bool test_pattern);
   /* -- framerates */
@@ -202,7 +202,7 @@ class ESP32Camera : public EntityBase, public Component {
   /* -- white balance */
   ESP32WhiteBalanceMode wb_mode_{ESP32_WB_MODE_AUTO};
   /* -- night mode */
-  uint8_t night_mode_{0};
+  bool night_mode_{false};
   /* -- Test */
   bool test_pattern_{false};
   /* -- framerates */

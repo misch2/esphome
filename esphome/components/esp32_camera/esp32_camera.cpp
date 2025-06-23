@@ -360,7 +360,7 @@ void ESP32Camera::set_agc_gain_ceiling(ESP32AgcGainCeiling gain_ceiling) { this-
 /* set white balance */
 void ESP32Camera::set_wb_mode(ESP32WhiteBalanceMode mode) { this->wb_mode_ = mode; }
 /* set night mode */
-void ESP32Camera::set_night_mode(uint8_t mode) { this->night_mode_ = mode; }
+void ESP32Camera::set_night_mode(bool mode) { this->night_mode_ = mode; }
 /* set test mode */
 void ESP32Camera::set_test_pattern(bool test_pattern) { this->test_pattern_ = test_pattern; }
 /* set fps */
