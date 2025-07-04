@@ -25,14 +25,26 @@ void ESP32Camera::setup() {
   /* initialize time to now */
   this->last_update_ = millis();
 
+  ESP_LOGD(TAG, "calling esp_camera_init");
   /* initialize camera */
   esp_err_t err = esp_camera_init(&this->config_);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_camera_init failed: %s", esp_err_to_name(err));
-    this->init_error_ = err;
-    this->mark_failed();
-    return;
+
+    ESP_LOGE(TAG, "waiting 1 sec");
+    delay(1000);  // 1 sec
+    ESP_LOGE(TAG, "trying again");
+    esp_err_t err = esp_camera_init(&this->config_);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "esp_camera_init failed multiple times: %s", esp_err_to_name(err));
+
+      this->init_error_ = err;
+      this->mark_failed();
+      return;
+    }
   }
+  ESP_LOGD(TAG, "esp_camera_init success");
 
   /* initialize camera parameters */
   this->update_camera_parameters();
@@ -141,9 +153,10 @@ void ESP32Camera::dump_config() {
                 "  Vertical Flip: %s\n"
                 "  Horizontal Mirror: %s\n"
                 "  Special Effect: %u\n"
-                "  White Balance Mode: %u",
+                "  White Balance Mode: %u"
+                "  Night Mode: %s",
                 st.quality, conf.fb_count, st.contrast, st.brightness, st.saturation, ONOFF(st.vflip),
-                ONOFF(st.hmirror), st.special_effect, st.wb_mode);
+                ONOFF(st.hmirror), st.special_effect, st.wb_mode, ONOFF(s->get_reg(s, 0x10f, 0xff) == 0x4b));
   // ESP_LOGCONFIG(TAG, "  Auto White Balance: %u", st.awb);
   // ESP_LOGCONFIG(TAG, "  Auto White Balance Gain: %u", st.awb_gain);
   ESP_LOGCONFIG(TAG,
@@ -200,6 +213,13 @@ void ESP32Camera::loop() {
   if (fb == nullptr) {
     ESP_LOGW(TAG, "Got invalid frame from camera!");
     xQueueSend(this->framebuffer_return_queue_, &fb, portMAX_DELAY);
+
+/* misch tmp test */
+    ESP_LOGW(TAG, "Attempting to reset camera");
+    this->update_camera_parameters();
+    this->current_image_.reset();
+
+
     return;
   }
   this->current_image_ = std::make_shared<CameraImage>(fb, this->single_requesters_ | this->stream_requesters_);
@@ -339,6 +359,8 @@ void ESP32Camera::set_agc_value(uint8_t agc_value) { this->agc_value_ = agc_valu
 void ESP32Camera::set_agc_gain_ceiling(ESP32AgcGainCeiling gain_ceiling) { this->agc_gain_ceiling_ = gain_ceiling; }
 /* set white balance */
 void ESP32Camera::set_wb_mode(ESP32WhiteBalanceMode mode) { this->wb_mode_ = mode; }
+/* set night mode */
+void ESP32Camera::set_night_mode(uint8_t mode) { this->night_mode_ = mode; }
 /* set test mode */
 void ESP32Camera::set_test_pattern(bool test_pattern) { this->test_pattern_ = test_pattern; }
 /* set fps */
@@ -394,6 +416,18 @@ void ESP32Camera::update_camera_parameters() {
   s->set_gainceiling(s, (gainceiling_t) this->agc_gain_ceiling_);
   /* update white balance mode */
   s->set_wb_mode(s, (int) this->wb_mode_);  // 0 to 4
+
+  /* update night mode */
+  //  see this for emulation of WcFeature from Tasmota:
+  //  https://github.com/arendst/Tasmota/blob/67a62ef3c8297409d0bc58b511e4958ebae577ed/tasmota/tasmota_xdrv_driver/xdrv_81_esp32_webcam.ino#L219
+  if (this->night_mode_ == 0) {
+      s->set_reg(s, 0x103, 0xff, 0x0a);  // COM1: Reset dummy frames
+      s->set_reg(s, 0x10f, 0xff, 0x43);  // RSVD: disable nightmode
+  } else {  // mode 1 or 2
+      s->set_reg(s, 0x10f, 0xff, 0x4b);  // RSVD: enable nightmode
+      s->set_reg(s, 0x103, 0xff, 0xcf);  // COM1: Set dummy frames to 7
+  }
+
   /* update test pattern */
   s->set_colorbar(s, this->test_pattern_);
 }
