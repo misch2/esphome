@@ -217,7 +217,7 @@ CONFIG_SCHEMA = cv.All(
                 ENUM_WB_MODE, upper=True
             ),
             # night mode
-            cv.Optional(CONF_NIGHT_MODE, default=False): cv.boolean,
+            cv.Optional(CONF_NIGHT_MODE, default=0): cv.int_range(min=0, max=2),
             # test pattern
             cv.Optional(CONF_TEST_PATTERN, default=False): cv.boolean,
             # framerates

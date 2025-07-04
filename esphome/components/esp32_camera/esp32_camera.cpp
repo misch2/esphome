@@ -360,7 +360,7 @@ void ESP32Camera::set_agc_gain_ceiling(ESP32AgcGainCeiling gain_ceiling) { this-
 /* set white balance */
 void ESP32Camera::set_wb_mode(ESP32WhiteBalanceMode mode) { this->wb_mode_ = mode; }
 /* set night mode */
-void ESP32Camera::set_night_mode(bool mode) { this->night_mode_ = mode; }
+void ESP32Camera::set_night_mode(uint8_t mode) { this->night_mode_ = mode; }
 /* set test mode */
 void ESP32Camera::set_test_pattern(bool test_pattern) { this->test_pattern_ = test_pattern; }
 /* set fps */
@@ -420,10 +420,10 @@ void ESP32Camera::update_camera_parameters() {
   /* update night mode */
   //  see this for emulation of WcFeature from Tasmota:
   //  https://github.com/arendst/Tasmota/blob/67a62ef3c8297409d0bc58b511e4958ebae577ed/tasmota/tasmota_xdrv_driver/xdrv_81_esp32_webcam.ino#L219
-  if (!this->night_mode_) {
+  if (this->night_mode_ == 0) {
       s->set_reg(s, 0x103, 0xff, 0x0a);  // COM1: Reset dummy frames
       s->set_reg(s, 0x10f, 0xff, 0x43);  // RSVD: disable nightmode
-  } else {
+  } else {  // mode 1 or 2
       s->set_reg(s, 0x10f, 0xff, 0x4b);  // RSVD: enable nightmode
       s->set_reg(s, 0x103, 0xff, 0xcf);  // COM1: Set dummy frames to 7
   }
